@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Input.Platform;
+using VoiceInk.Windows.Interfaces;
 
 namespace VoiceInk.Windows.Adapters;
 
@@ -9,7 +9,7 @@ namespace VoiceInk.Windows.Adapters;
 /// Equivalent to ClipboardManager.swift on macOS.
 /// Uses Avalonia's cross-platform clipboard abstraction.
 /// </summary>
-public class WindowsClipboardService
+public class WindowsClipboardService : IClipboardService
 {
     private string? _savedContent;
 
@@ -30,6 +30,7 @@ public class WindowsClipboardService
     public async Task<string?> SaveAndClearAsync()
     {
         _savedContent = await ReadTextAsync();
+        await WriteTextAsync(string.Empty);
         return _savedContent;
     }
 

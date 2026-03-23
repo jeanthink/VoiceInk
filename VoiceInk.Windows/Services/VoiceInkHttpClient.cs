@@ -21,15 +21,19 @@ public class VoiceInkHttpClient : IDisposable
         _http = new HttpClient
         {
             BaseAddress = new Uri(baseUrl),
-            Timeout = TimeSpan.FromSeconds(30)
+            Timeout = TimeSpan.FromSeconds(120) // Transcription can be slow
         };
     }
 
-    public async Task<bool> IsHealthyAsync(CancellationToken ct = default)
+    /// <summary>
+    /// Health check to verify VoiceInkService is running and responsive.
+    /// GET /api/health
+    /// </summary>
+    public async Task<bool> HealthCheckAsync(CancellationToken ct = default)
     {
         try
         {
-            var response = await _http.GetAsync("/health", ct);
+            var response = await _http.GetAsync("/api/health", ct);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -38,30 +42,63 @@ public class VoiceInkHttpClient : IDisposable
         }
     }
 
-    public Task<TranscriptionResult?> TranscribeAsync(
+    /// <summary>
+    /// Send audio data for transcription.
+    /// POST /api/transcribe
+    /// Content-Type: multipart/form-data
+    /// Body: audio file (PCM/WAV), model ID
+    /// </summary>
+    public async Task<TranscriptionResult?> TranscribeAsync(
         byte[] audioData,
-        string modelId,
+        string modelId = "whisper-1",
         CancellationToken ct = default)
     {
-        // TODO: Implement multipart form upload for audio data
-        // POST /transcribe with audio bytes + model ID
-        throw new NotImplementedException("Implement when VoiceInkService API is finalized");
+        using var content = new MultipartFormDataContent();
+        content.Add(new ByteArrayContent(audioData), "audio", "recording.wav");
+        content.Add(new StringContent(modelId), "model");
+
+        var response = await _http.PostAsync("/api/transcribe", content, ct);
+        
+        if (!response.IsSuccessStatusCode)
+            return null;
+            
+        return await response.Content.ReadFromJsonAsync<TranscriptionResult>(cancellationToken: ct);
     }
 
+    /// <summary>
+    /// Send text for AI enhancement (rewrite with prompt).
+    /// POST /api/enhance
+    /// Content-Type: application/json
+    /// Body: EnhancementRequest
+    /// </summary>
     public async Task<string?> EnhanceAsync(
         EnhancementRequest request,
         CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync("/enhance", request, ct);
-        response.EnsureSuccessStatusCode();
+        var response = await _http.PostAsJsonAsync("/api/enhance", request, ct);
+        
+        if (!response.IsSuccessStatusCode)
+            return null;
+            
         var result = await response.Content.ReadFromJsonAsync<EnhancementResult>(cancellationToken: ct);
         return result?.EnhancedText;
     }
 
-    public async Task<ModelInfo[]> GetModelsAsync(CancellationToken ct = default)
+    /// <summary>
+    /// List available transcription models.
+    /// GET /api/models
+    /// </summary>
+    public async Task<ModelInfo[]> ListModelsAsync(CancellationToken ct = default)
     {
-        var models = await _http.GetFromJsonAsync<ModelInfo[]>("/models", ct);
-        return models ?? Array.Empty<ModelInfo>();
+        try
+        {
+            var models = await _http.GetFromJsonAsync<ModelInfo[]>("/api/models", ct);
+            return models ?? Array.Empty<ModelInfo>();
+        }
+        catch
+        {
+            return Array.Empty<ModelInfo>();
+        }
     }
 
     public void Dispose()

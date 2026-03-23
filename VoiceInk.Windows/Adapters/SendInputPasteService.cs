@@ -1,16 +1,19 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using VoiceInk.Windows.Interfaces;
 
 namespace VoiceInk.Windows.Adapters;
 
 /// <summary>
 /// Text paste simulation using Win32 SendInput API.
 /// Equivalent to CursorPaster.swift on macOS (uses CGEvent).
-/// Strategy: Set clipboard, then send Ctrl+V.
+/// Strategy: Save clipboard, set text, send Ctrl+V, restore clipboard.
 /// </summary>
-public class SendInputPasteService
+public class SendInputPasteService : IPasteService
 {
+    private readonly IClipboardService _clipboard;
+    
     [DllImport("user32.dll")]
     private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
@@ -19,10 +22,15 @@ public class SendInputPasteService
     private const ushort VK_CONTROL = 0x11;
     private const ushort VK_V = 0x56;
 
-    public async Task PasteAsync(string text, WindowsClipboardService clipboard)
+    public SendInputPasteService(IClipboardService clipboard)
     {
-        await clipboard.SaveAndClearAsync();
-        await clipboard.WriteTextAsync(text);
+        _clipboard = clipboard;
+    }
+
+    public async Task PasteAsync(string text)
+    {
+        await _clipboard.SaveAndClearAsync();
+        await _clipboard.WriteTextAsync(text);
 
         // Brief delay for clipboard to settle
         await Task.Delay(50);
@@ -32,7 +40,7 @@ public class SendInputPasteService
         // Brief delay for paste to complete
         await Task.Delay(100);
 
-        await clipboard.RestoreAsync();
+        await _clipboard.RestoreAsync();
     }
 
     private static void SendCtrlV()
