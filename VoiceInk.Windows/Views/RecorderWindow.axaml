@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="VoiceInk.Windows.Views.RecorderWindow"
+        Title="VoiceInk"
+        Width="320"
+        Height="120"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False"
+        SystemDecorations="None">
+
+    <Grid Background="#1E1E2E">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12">
+            <TextBlock Text="🎙 VoiceInk"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       Foreground="White"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="Press shortcut key to start recording"
+                       FontSize="12"
+                       Foreground="#888"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</Window>
