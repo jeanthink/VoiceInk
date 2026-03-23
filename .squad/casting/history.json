@@ -1,0 +1,23 @@
+{
+  "assignment_cast_snapshots": {
+    "repl-cast-2026-03-23T00:37:36.322Z": {
+      "created_at": "2026-03-23T00:37:36.322Z",
+      "agents": [
+        "holden",
+        "naomi",
+        "amos",
+        "bobbie",
+        "drummer",
+        "scribe",
+        "ralph"
+      ],
+      "universe": "The Expanse"
+    }
+  },
+  "universe_usage_history": [
+    {
+      "universe": "The Expanse",
+      "used_at": "2026-03-23T00:37:36.322Z"
+    }
+  ]
+}
