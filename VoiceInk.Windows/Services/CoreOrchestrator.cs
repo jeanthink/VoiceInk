@@ -118,10 +118,11 @@ public class CoreOrchestrator : IDisposable
             // TODO: Check if enhancement is enabled in settings
             var enhancementRequest = new EnhancementRequest(
                 Text: transcription.Text,
-                PromptId: null, // Use default prompt
-                CustomPromptText: null,
-                SelectedText: null,
-                ActiveUrl: null
+                Model: "gpt-4o-mini", // TODO: Make configurable from settings
+                PromptId: null,
+                SystemPrompt: null,
+                Temperature: null,
+                MaxTokens: null
             );
 
             var enhancedText = await _coreClient.EnhanceAsync(enhancementRequest, ct);
