@@ -71,6 +71,9 @@ public class DpapiSecretStore : ISecretStore
         var safeKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(key))
             .Replace('/', '_')
             .Replace('+', '-');
-        return Path.Combine(_storePath, safeKey);
+        var fullPath = Path.GetFullPath(Path.Combine(_storePath, safeKey));
+        if (!fullPath.StartsWith(Path.GetFullPath(_storePath), StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Invalid key: path traversal detected");
+        return fullPath;
     }
 }

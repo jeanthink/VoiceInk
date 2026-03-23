@@ -22,6 +22,7 @@ public class CoreOrchestrator : IDisposable
     private readonly INotificationService _notifications;
     private readonly ISecretStore _secrets;
 
+    private readonly SemaphoreSlim _operationLock = new(1, 1);
     private string _currentModelId = "whisper-1";
     private bool _isProcessing;
 
@@ -42,13 +43,27 @@ public class CoreOrchestrator : IDisposable
     {
         // TODO: Make hotkey configurable from settings
         // Default: Ctrl+Shift+Space (0x02 = Ctrl, 0x04 = Shift, 0x20 = Space)
-        _globalShortcut.OnActivate = () => _ = StartRecordingAsync();
-        _globalShortcut.OnDeactivate = () => _ = StopRecordingAndProcessAsync();
+        _globalShortcut.OnActivate = () => _ = RunLockedAsync(() => StartRecordingAsync());
+        _globalShortcut.OnDeactivate = () => _ = RunLockedAsync(() => StopRecordingAndProcessAsync());
         
         _globalShortcut.Register(
             Win32GlobalShortcut.MOD_CONTROL | Win32GlobalShortcut.MOD_SHIFT,
             0x20 // VK_SPACE
         );
+    }
+
+    private async Task RunLockedAsync(Func<Task> action)
+    {
+        if (!await _operationLock.WaitAsync(0))
+            return; // Another operation is already in progress
+        try
+        {
+            await action();
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
     }
 
     /// <summary>

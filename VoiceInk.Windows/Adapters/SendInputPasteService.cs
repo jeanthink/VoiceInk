@@ -30,17 +30,22 @@ public class SendInputPasteService : IPasteService
     public async Task PasteAsync(string text)
     {
         await _clipboard.SaveAndClearAsync();
-        await _clipboard.WriteTextAsync(text);
+        try
+        {
+            await _clipboard.WriteTextAsync(text);
 
-        // Brief delay for clipboard to settle
-        await Task.Delay(50);
+            // Brief delay for clipboard to settle
+            await Task.Delay(50);
 
-        SendCtrlV();
+            SendCtrlV();
 
-        // Brief delay for paste to complete
-        await Task.Delay(100);
-
-        await _clipboard.RestoreAsync();
+            // Brief delay for paste to complete
+            await Task.Delay(100);
+        }
+        finally
+        {
+            await _clipboard.RestoreAsync();
+        }
     }
 
     private static void SendCtrlV()
